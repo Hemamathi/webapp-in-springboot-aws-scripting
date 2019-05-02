@@ -1,0 +1,10 @@
+version: 0.0
+os: linux
+files:
+  - source: noteapp-0.0.1-SNAPSHOT.jar
+    destination: /var
+hooks:
+  ApplicationStart:
+    - location: ./applicationstart.sh
+      timeout: 180
+      runas: centos

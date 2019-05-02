@@ -1,0 +1,40 @@
+version: 2
+jobs:
+  build:
+    docker:
+      # specify the version you desire here
+      - image: circleci/openjdk:8-jdk
+    # environment:
+    #   # Customize the JVM maximum heap limit
+    #   MAVEN_OPTS: -Xmx3200m
+    steps:
+      - checkout
+      - run:
+          name: Install AWS CLI
+          command: |
+            sudo apt-get -y -qq install awscli
+            aws --version
+      - run:
+          name: Build JAR
+          command: |
+            cd webapp/noteapp
+            mvn clean package
+      - run:
+          name: Zip JAR File
+          command: |
+            mkdir package
+            mv infrastructure/aws/codedeploy/applicationstart.sh package/
+            mv webapp/noteapp/target/noteapp-0.0.1-SNAPSHOT.jar package/
+            mv infrastructure/aws/codedeploy/amazon-cloudwatch-agent.json package/
+            mv appspec.yml package/
+            cd package
+            zip application.zip noteapp-0.0.1-SNAPSHOT.jar applicationstart.sh appspec.yml amazon-cloudwatch-agent.json
+            chmod 777 application.zip 
+      - run:
+          name: Upload ZIP to S3 bucket
+          command: aws s3 cp package/application.zip s3://code-deploy.csye6225-spring2019-$AWS_BUCKET_NAME.me
+      - run:
+          name: Create Deployment
+          command: aws deploy create-deployment --application-name csye6225-webapp --deployment-config-name CodeDeployDefault.AllAtOnce --deployment-group-name csye6225-webapp-deployment --s3-location bucket=code-deploy.csye6225-spring2019-$AWS_BUCKET_NAME.me,bundleType=zip,key=application.zip
+
+

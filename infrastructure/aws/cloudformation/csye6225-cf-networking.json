@@ -1,0 +1,228 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Parameters": {
+    "Name": {
+      "Type": "String"
+    },
+    "VPCName": {
+      "Type": "String"
+    },
+    "PublicRouteTableName": {
+      "Type": "String"
+    },
+    "PublicSubnet1": {
+      "Type": "String"
+    },
+    "PublicSubnet2": {
+      "Type": "String"
+    },
+    "PublicSubnet3": {
+      "Type": "String"
+    },
+    "InternetGateway": {
+      "Type": "String"
+    }
+  },
+  "Resources": {
+    "csye6225VPC": {
+      "Type": "AWS::EC2::VPC",
+      "Properties": {
+        "CidrBlock": "10.0.0.0/16",
+        "EnableDnsSupport": "true",
+        "EnableDnsHostnames": "true",
+        "InstanceTenancy": "default",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Ref": "VPCName"
+            }
+          }
+        ]
+      }
+    },
+    "csye6225PublicSubnet1": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "MapPublicIpOnLaunch": true,
+        "VpcId": {
+          "Ref": "csye6225VPC"
+        },
+        "CidrBlock": "10.0.1.0/24",
+        "AvailabilityZone": "us-east-1a",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Ref": "PublicSubnet1"
+            }
+          }
+        ]
+      }
+    },
+    "csye6225PublicSubnet2": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "MapPublicIpOnLaunch": true,
+        "VpcId": {
+          "Ref": "csye6225VPC"
+        },
+        "CidrBlock": "10.0.2.0/24",
+        "AvailabilityZone": "us-east-1b",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Ref": "PublicSubnet2"
+            }
+          }
+        ]
+      }
+    },
+    "csye6225PublicSubnet3": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {
+        "MapPublicIpOnLaunch": true,
+        "VpcId": {
+          "Ref": "csye6225VPC"
+        },
+        "CidrBlock": "10.0.3.0/24",
+        "AvailabilityZone": "us-east-1c",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Ref": "PublicSubnet3"
+            }
+          }
+        ]
+      }
+    },
+    "csye6225InternetGateway": {
+      "Type": "AWS::EC2::InternetGateway",
+      "Properties": {
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Ref": "InternetGateway"
+            }
+          }
+        ]
+      }
+    },
+    "csye6225AttachGateway": {
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+      "Properties": {
+        "VpcId": {
+          "Ref": "csye6225VPC"
+        },
+        "InternetGatewayId": {
+          "Ref": "csye6225InternetGateway"
+        }
+      }
+    },
+    "csye6225PublicRouteTable": {
+      "Type": "AWS::EC2::RouteTable",
+      "Properties": {
+        "VpcId": {
+          "Ref": "csye6225VPC"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Ref": "PublicRouteTableName"
+            }
+          }
+        ]
+      }
+    },
+    "csye6225PublicRoute": {
+      "Type": "AWS::EC2::Route",
+      "DependsOn": "csye6225AttachGateway",
+      "Properties": {
+        "RouteTableId": {
+          "Ref": "csye6225PublicRouteTable"
+        },
+        "DestinationCidrBlock": "0.0.0.0/0",
+        "GatewayId": {
+          "Ref": "csye6225InternetGateway"
+        }
+      }
+    },
+    "csye6225PublicSubnetRouteTableAssociation": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "SubnetId": {
+          "Ref": "csye6225PublicSubnet1"
+        },
+        "RouteTableId": {
+          "Ref": "csye6225PublicRouteTable"
+        }
+      }
+    },
+    "csye6225PublicSubnetRouteTableAssociation2": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "SubnetId": {
+          "Ref": "csye6225PublicSubnet2"
+        },
+        "RouteTableId": {
+          "Ref": "csye6225PublicRouteTable"
+        }
+      }
+    },
+    "csye6225PublicSubnetRouteTableAssociation3": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {
+        "SubnetId": {
+          "Ref": "csye6225PublicSubnet3"
+        },
+        "RouteTableId": {
+          "Ref": "csye6225PublicRouteTable"
+        }
+      }
+    }
+  },
+  "Outputs": {
+    "VPCId": {
+      "Description": "VPC ID",
+      "Value": {
+        "Ref": "csye6225VPC"
+      },
+      "Export": {
+        "Name": {"Fn::Sub": "${AWS::StackName}-VPCID"}
+      }
+    },
+    "PublicSubnet1": {
+      "Description": "The subnet ID to use for WEB APP security group",
+      "Value": {
+        "Ref": "csye6225PublicSubnet1"
+      },
+      "Export": {
+        "Name": {"Fn::Sub": "${AWS::StackName}-PublicSubnet1"}
+      }
+    },
+    "PublicSubnet2": {
+      "Description": "The subnet ID to use for RDS security group",
+      "Value": {
+        "Ref": "csye6225PublicSubnet2"
+      },
+      "Export": {
+        "Name": {"Fn::Sub": "${AWS::StackName}-PublicSubnet2"}
+        
+      }
+    },
+    "PublicSubnet3": {
+      "Description": "The subnet ID to use for RDS security group",
+      "Value": {
+        "Ref": "csye6225PublicSubnet3"
+      },
+      "Export": {
+        "Name": {"Fn::Sub": "${AWS::StackName}-PublicSubnet3"}
+        
+      }
+    }
+  }
+}
